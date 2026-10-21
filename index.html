@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BYU-Idaho Class Scheduler</title>
+  <style>
+    :root {
+      --border: #d5d9e0;
+      --bg: #f5f6f8;
+      --accent: #1f5fae;
+      --hour: 44px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font: 14px/1.35 system-ui, sans-serif;
+      color: #222;
+      background: var(--bg);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    header span {
+      opacity: .85;
+      font-size: 13px;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      min-height: 0;
+    }
+
+    aside {
+      background: #fff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .filters {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: 6px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .filters input[type=search] {
+      grid-column: 1 / -1;
+    }
+
+    .filters input,
+    .filters select {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font: inherit;
+    }
+
+    .filters input[type=checkbox] {
+      width: auto;
+      vertical-align: middle;
+    }
+
+    .filters label {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: #555;
+    }
+
+    #results {
+      overflow: auto;
+      flex: 1;
+    }
+
+    .count {
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #666;
+      background: var(--bg);
+    }
+
+    .course {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .course>summary {
+      padding: 8px 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .course>summary:hover {
+      background: #eef3fa;
+    }
+
+    .course .cn {
+      font-weight: 600;
+    }
+
+    .course .meta {
+      color: #777;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .sec {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 10px 6px 22px;
+      border-top: 1px dashed #e4e6ea;
+      cursor: pointer;
+    }
+
+    .sec:hover {
+      background: #fff7df;
+    }
+
+    .sec.selected {
+      background: #e3f1e3;
+    }
+
+    .sec .code {
+      font-weight: 600;
+      min-width: 36px;
+    }
+
+    .sec .info {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .sec .info div {
+      white-space: nowrap;
+    }
+
+    .sec .info div.instr {
+      white-space: normal;
+    }
+
+    .sec button {
+      align-self: center;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 0 5px;
+      border-radius: 8px;
+      background: #e8ebf0;
+      color: #444;
+      margin-left: 4px;
+    }
+
+    .tag.warn {
+      background: #fde2e2;
+      color: #a11;
+    }
+
+    .tag.wait {
+      background: #fff0cc;
+      color: #8a5a00;
+    }
+
+    .tag.ok {
+      background: #dff3e4;
+      color: #1b6b32;
+    }
+
+    .tag a {
+      color: inherit;
+    }
+
+    section.cal {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .summary {
+      padding: 8px 12px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 4px 2px 8px;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .chip button {
+      background: rgba(255, 255, 255, .25);
+      border: 0;
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .total {
+      margin-left: auto;
+      font-weight: 600;
+    }
+
+    #calwrap {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 52px repeat(6, 1fr);
+      min-width: 640px;
+      position: relative;
+    }
+
+    .grid .dayhead {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #fafbfc;
+      text-align: center;
+      padding: 6px 0;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+    }
+
+    .timecol {
+      position: relative;
+    }
+
+    .timecol .lbl {
+      position: absolute;
+      right: 6px;
+      font-size: 11px;
+      color: #777;
+      transform: translateY(-50%);
+    }
+
+    .daycol {
+      position: relative;
+      border-left: 1px solid var(--border);
+      background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hour) - 1px), #eceef2 calc(var(--hour) - 1px), #eceef2 var(--hour));
+    }
+
+    .ev {
+      position: absolute;
+      border-radius: 4px;
+      padding: 2px 4px;
+      color: #fff;
+      font-size: 11.5px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, .25);
+      cursor: pointer;
+    }
+
+    .ev b {
+      display: block;
+    }
+
+    .ev.conflict {
+      outline: 2px solid #d00;
+      outline-offset: -2px;
+    }
+
+    .ev.ghost {
+      background: repeating-linear-gradient(45deg, #888, #888 6px, #aaa 6px, #aaa 12px) !important;
+      opacity: .75;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .noTime {
+      padding: 8px 12px;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: #444;
+    }
+
+    .noTime:empty {
+      display: none;
+    }
+
+    button.add {
+      padding: 3px 8px;
+      border: 1px solid var(--accent);
+      background: #fff;
+      color: var(--accent);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button.add.rm {
+      border-color: #b33;
+      color: #b33;
+    }
+
+    button.clear {
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+
+    .empty {
+      padding: 20px;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>BYU-Idaho Class Scheduler</h1><span id="termLabel"></span>
+  </header>
+  <main>
+    <aside>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Search code, title, e.g. “CSE 210” or “accounting”" autofocus>
+        <select id="subject">
+          <option value="">All subjects</option>
+        </select>
+        <select id="delivery">
+          <option value="">Any delivery</option>
+        </select>
+        <label><input type="checkbox" id="hideConflicts"> Hide sections that conflict with my schedule</label>
+        <label><input type="checkbox" id="hideClosed"> Hide closed sections</label>
+      </div>
+      <div class="count" id="count"></div>
+      <div id="results"></div>
+    </aside>
+    <section class="cal">
+      <div class="summary" id="summary"></div>
+      <div id="calwrap">
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="noTime" id="noTime"></div>
+    </section>
+  </main>
+
+  <script>
+    const START_HOUR = 7, END_HOUR = 22, HOUR_PX = 44;
+    const DAYS = ['M', 'T', 'W', 'R', 'F', 'S'];
+    const DAY_NAMES = { M: 'Mon', T: 'Tue', W: 'Wed', R: 'Thu', F: 'Fri', S: 'Sat' };
+    const COLORS = ['#1f5fae', '#2e8b57', '#b5651d', '#8a3ab9', '#c2185b', '#00838f', '#6d6d00', '#5d4037', '#37474f', '#d84315'];
+    const STORE_KEY = 'byui-scheduler-selected';
+    const RESULT_LIMIT = 60;
+
+    const $ = id => document.getElementById(id);
+    let sections = [], byCode = new Map(), courses = [], professors = {};
+    let selected = new Set(JSON.parse(localStorage.getItem(STORE_KEY) || '[]'));
+    let hovered = null;
+
+    const fmtTime = m => {
+      const h = Math.floor(m / 60), mm = String(m % 60).padStart(2, '0');
+      return `${((h + 11) % 12) + 1}:${mm}${h < 12 ? 'a' : 'p'}`;
+    };
+    const fmtHour = h => `${((h + 11) % 12) + 1}${h < 12 ? ' AM' : ' PM'}`;
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const timed = m => m.days && m.start_min != null && m.end_min != null;
+
+    function meetingText(m) {
+      if (!timed(m)) return 'No set meeting time';
+      return `${m.days} ${fmtTime(m.start_min)}–${fmtTime(m.end_min)}` + (m.room ? ` · ${esc(m.room)}` : '');
+    }
+
+    function meetingsConflict(a, b) {
+      if (!timed(a) || !timed(b)) return false;
+      if (a.start_date && b.start_date && (a.end_date < b.start_date || b.end_date < a.start_date)) return false;
+      if (a.start_min >= b.end_min || b.start_min >= a.end_min) return false;
+      return [...a.days].some(d => b.days.includes(d));
+    }
+    function sectionsConflict(a, b) {
+      return a.meetings.some(m => b.meetings.some(n => meetingsConflict(m, n)));
+    }
+    const conflictsWithSelection = s =>
+      [...selected].some(c => c !== s.code && byCode.has(c) && sectionsConflict(s, byCode.get(c)));
+
+    function colorFor(code) {
+      const key = byCode.get(code).subject + byCode.get(code).number;
+      let h = 0;
+      for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      return COLORS[h % COLORS.length];
+    }
+
+    function save() { localStorage.setItem(STORE_KEY, JSON.stringify([...selected])); }
+    function toggle(code) {
+      selected.has(code) ? selected.delete(code) : selected.add(code);
+      save();
+      renderResults();
+      renderCalendar();
+    }
+
+    function buildIndex(data) {
+      sections = data.sections;
+      professors = data.professors || {};
+      const map = new Map();
+      for (const s of sections) {
+        byCode.set(s.code, s);
+        const key = s.subject + ' ' + s.number;
+        if (!map.has(key)) map.set(key, { key, subject: s.subject, number: s.number, title: s.title, sections: [] });
+        map.get(key).sections.push(s);
+      }
+      courses = [...map.values()].sort((a, b) =>
+        a.subject.localeCompare(b.subject) || a.number.localeCompare(b.number, undefined, { numeric: true }));
+      for (const c of courses) {
+        const names = c.sections.map(s => s.instructor || '').join(' ');
+        c.search = `${c.subject} ${c.number} ${c.subject}${c.number} ${c.title} ${names}`.toLowerCase();
+      }
+
+      const subjects = [...new Set(courses.map(c => c.subject))].sort();
+      $('subject').insertAdjacentHTML('beforeend', subjects.map(s => `<option>${esc(s)}</option>`).join(''));
+      const deliveries = new Map(sections.map(s => [s.delivery, s.delivery_label]));
+      $('delivery').insertAdjacentHTML('beforeend',
+        [...deliveries].map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join(''));
+      $('termLabel').textContent = `Term ${sections[0]?.term.replace(';', ' ')} · ${sections.length} sections · ${courses.length} courses`;
+      selected = new Set([...selected].filter(c => byCode.has(c)));
+    }
+
+    function instructorHtml(s) {
+      if (!s.instructor) return '';
+      return s.instructor.split('; ').map(n => {
+        const [last, first = ''] = n.split(', ');
+        const p = professors[n];
+        const rating = p && p.num_ratings > 0
+          ? ` <span class="tag"><a href="https://www.ratemyprofessors.com/professor/${p.rmp_id}" target="_blank" rel="noopener"
+               title="${esc(p.rmp_name)} · difficulty ${p.difficulty ?? '?'} · ${p.num_ratings} ratings${p.match === 'exact' || p.match === 'manual' ? '' : ' · name match is approximate'}">★ ${p.rating.toFixed(1)}${p.match === 'exact' || p.match === 'manual' ? '' : '?'}</a></span>` : '';
+        return `${esc((first.split(' ')[0] + ' ' + last).trim())}${rating}`;
+      }).join(', ');
+    }
+
+    function statusHtml(s) {
+      if (!s.status) return '';
+      const cls = s.status === 'Open' || s.status === 'Reopened' ? 'ok' : s.status === 'Closed' ? 'warn' : 'wait';
+      const seats = s.seats_total != null ? ` ${s.seats_open}/${s.seats_total}` : '';
+      return `<span class="tag ${cls}">${esc(s.status)}${seats}</span>`;
+    }
+
+    function renderResults() {
+      const terms = $('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+      const subj = $('subject').value, del = $('delivery').value, hide = $('hideConflicts').checked;
+      const hideClosed = $('hideClosed').checked;
+      const openKeys = new Set([...$('results').querySelectorAll('details[open]')].map(d => d.dataset.key));
+      const scroll = $('results').scrollTop;
+
+      const matches = [];
+      for (const c of courses) {
+        if (subj && c.subject !== subj) continue;
+        if (!terms.every(t => c.search.includes(t))) continue;
+        let secs = c.sections;
+        if (del) secs = secs.filter(s => s.delivery === del);
+        if (hideClosed) secs = secs.filter(s => s.status !== 'Closed' || selected.has(s.code));
+        if (hide) secs = secs.filter(s => selected.has(s.code) || !conflictsWithSelection(s));
+        if (secs.length) matches.push({ c, secs });
+      }
+
+      $('count').textContent = `${matches.length} course${matches.length === 1 ? '' : 's'}` +
+        (matches.length > RESULT_LIMIT ? ` (showing first ${RESULT_LIMIT} — refine your search)` : '');
+      const autoOpen = matches.length <= 5;
+
+      $('results').innerHTML = matches.slice(0, RESULT_LIMIT).map(({ c, secs }) => `
+    <details class="course" data-key="${esc(c.key)}" ${autoOpen || openKeys.has(c.key) ? 'open' : ''}>
+      <summary><span><span class="cn">${esc(c.key)}</span> ${esc(c.title)}</span>
+        <span class="meta">${secs.length} sec</span></summary>
+      ${secs.map(s => {
+        const sel = selected.has(s.code), bad = !sel && conflictsWithSelection(s);
+        return `<div class="sec ${sel ? 'selected' : ''}" data-code="${esc(s.code)}">
+          <span class="code">${esc(s.section)}</span>
+          <span class="info">
+            ${s.instructor ? `<div class="instr">${instructorHtml(s)}</div>` : ''}
+            ${s.meetings.map(m => `<div>${meetingText(m)}</div>`).join('') || '<div>No meetings</div>'}
+            <div>${esc(s.delivery_label)} · ${s.credits} cr ${statusHtml(s)}
+              ${s.meetings.some(m => m.start_date && m.end_date && (m.start_date !== '2027-01-06' || m.end_date !== '2027-04-08'))
+            ? `<span class="tag">${esc(s.meetings[0].start_date)} → ${esc(s.meetings[0].end_date)}</span>` : ''}
+              ${bad ? '<span class="tag warn">conflict</span>' : ''}</div>
+          </span>
+          <button class="add ${sel ? 'rm' : ''}">${sel ? 'Remove' : 'Add'}</button>
+        </div>`;
+      }).join('')}
+    </details>`).join('') || '<div class="empty">No matching classes.</div>';
+      $('results').scrollTop = scroll;
+    }
+
+    function layoutDay(events) {
+      // Greedy column packing for overlapping events within one day.
+      events.sort((a, b) => a.start - b.start || b.end - a.end);
+      const groups = [];
+      let cur = null;
+      for (const e of events) {
+        if (!cur || e.start >= cur.end) { cur = { end: e.end, cols: [], items: [] }; groups.push(cur); }
+        let col = cur.cols.findIndex(end => end <= e.start);
+        if (col < 0) { col = cur.cols.length; cur.cols.push(0); }
+        cur.cols[col] = e.end;
+        e.col = col; cur.items.push(e);
+        cur.end = Math.max(cur.end, e.end);
+      }
+      for (const g of groups) for (const e of g.items) e.ncols = g.cols.length;
+    }
+
+    function renderCalendar() {
+      const chosen = [...selected].map(c => byCode.get(c)).filter(Boolean);
+      const events = Object.fromEntries(DAYS.map(d => [d, []]));
+      const untimed = [];
+
+      const add = (s, ghost) => {
+        let any = false;
+        for (const m of s.meetings) {
+          if (!timed(m)) continue;
+          any = true;
+          for (const d of m.days) if (events[d]) events[d].push({ s, m, start: m.start_min, end: m.end_min, ghost });
+        }
+        return any;
+      };
+      for (const s of chosen) if (!add(s, false)) untimed.push(s);
+      if (hovered && !selected.has(hovered.code)) add(hovered, true);
+
+      let minH = START_HOUR, maxH = END_HOUR;
+      for (const list of Object.values(events)) for (const e of list) {
+        minH = Math.min(minH, Math.floor(e.start / 60));
+        maxH = Math.max(maxH, Math.ceil(e.end / 60));
+      }
+      const total = (maxH - minH) * HOUR_PX;
+
+      // Mark real (non-ghost) events that overlap another selected event.
+      for (const list of Object.values(events)) {
+        const real = list.filter(e => !e.ghost);
+        for (const e of real) e.conflict = real.some(o => o !== e && o.s !== e.s && meetingsConflict(e.m, o.m));
+      }
+
+      let html = '<div class="dayhead" style="border-left:0"></div>' +
+        DAYS.map(d => `<div class="dayhead">${DAY_NAMES[d]}</div>`).join('');
+      html += `<div class="timecol" style="height:${total}px">` +
+        Array.from({ length: maxH - minH }, (_, i) =>
+          `<span class="lbl" style="top:${i * HOUR_PX}px;${i === 0 ? 'transform:none' : ''}">${fmtHour(minH + i)}</span>`).join('') + '</div>';
+      for (const d of DAYS) {
+        layoutDay(events[d]);
+        html += `<div class="daycol" style="height:${total}px">` + events[d].map(e => {
+          const top = (e.start / 60 - minH) * HOUR_PX, h = (e.end - e.start) / 60 * HOUR_PX;
+          const w = 100 / e.ncols;
+          return `<div class="ev ${e.conflict ? 'conflict' : ''} ${e.ghost ? 'ghost' : ''}" data-code="${esc(e.s.code)}"
+        style="top:${top}px;height:${h - 1}px;left:calc(${e.col * w}% + 1px);width:calc(${w}% - 2px);background:${colorFor(e.s.code)}"
+        title="${esc(e.s.code + ' ' + e.s.title)}&#10;${fmtTime(e.start)}–${fmtTime(e.end)} ${esc(e.m.room || '')}">
+        <b>${esc(e.s.subject + ' ' + e.s.number + '-' + e.s.section)}</b>
+        ${h > 34 ? esc(e.s.title) : ''}${h > 62 ? `<br>${fmtTime(e.start)}–${fmtTime(e.end)}` : ''}${h > 48 && e.m.room ? `<br>${esc(e.m.room)}` : ''}
+      </div>`;
+        }).join('') + '</div>';
+      }
+      $('grid').innerHTML = html;
+
+      const credits = chosen.reduce((n, s) => n + (s.credits || 0), 0);
+      $('summary').innerHTML = chosen.length
+        ? chosen.map(s => `<span class="chip" style="background:${colorFor(s.code)}">${esc(s.code)}
+        <button data-code="${esc(s.code)}" title="Remove">×</button></span>`).join('') +
+        `<span class="total">${credits} credits</span><button class="clear" id="clearAll">Clear all</button>`
+        : '<span style="color:#777">No classes selected — search on the left and click a section to add it.</span>';
+
+      $('noTime').innerHTML = untimed.length
+        ? '<b>No set meeting time:</b> ' + untimed.map(s => `${esc(s.code)} (${esc(s.title)}, ${esc(s.delivery_label)})`).join('; ')
+        : '';
+    }
+
+    function init() {
+      $('results').addEventListener('click', e => {
+        if (e.target.closest('a')) return;
+        const row = e.target.closest('.sec');
+        if (row) toggle(row.dataset.code);
+      });
+      $('results').addEventListener('mouseover', e => {
+        const row = e.target.closest('.sec');
+        const s = row ? byCode.get(row.dataset.code) : null;
+        if (s !== hovered) { hovered = s; renderCalendar(); }
+      });
+      $('results').addEventListener('mouseleave', () => { if (hovered) { hovered = null; renderCalendar(); } });
+      $('summary').addEventListener('click', e => {
+        if (e.target.id === 'clearAll') { selected.clear(); save(); renderResults(); renderCalendar(); }
+        else if (e.target.dataset.code) toggle(e.target.dataset.code);
+      });
+      $('grid').addEventListener('click', e => {
+        const ev = e.target.closest('.ev:not(.ghost)');
+        if (ev) toggle(ev.dataset.code);
+      });
+      let timer;
+      $('q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(renderResults, 120); });
+      for (const id of ['subject', 'delivery', 'hideConflicts', 'hideClosed']) $(id).addEventListener('change', renderResults);
+    }
+
+    fetch('sections.json')
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(data => { buildIndex(data); init(); renderResults(); renderCalendar(); })
+      .catch(err => {
+        $('results').innerHTML = `<div class="empty">Could not load sections.json (${esc(err.message)}).<br>
+      Open this page through a web server: <code>python serve.py</code></div>`;
+      });
+  </script>
+</body>
+
+</html>
