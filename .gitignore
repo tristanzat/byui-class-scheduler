@@ -9,6 +9,5 @@ venv/
 
 # Scraped data (regenerate with the scripts)
 byui.db
-sections.json
 cache/
 cache_auth/
