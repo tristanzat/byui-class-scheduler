@@ -1,6 +1,8 @@
 # BYU-Idaho Class Scheduler
 
-Scrapes the BYU-Idaho class schedule, adds RateMyProfessors ratings, and serves a local web page for browsing sections and building a schedule.
+Scrapes the BYU-Idaho class schedule, adds RateMyProfessors ratings, and serves a web page for browsing sections and building a schedule.
+
+The page is static (`index.html` plus the committed `sections.json`), so it can be hosted on GitHub Pages without running any scripts.
 
 ## Setup
 
@@ -32,17 +34,20 @@ pip install requests beautifulsoup4
    python rmp_review.py
    ```
 
-4. Start the frontend at http://localhost:8000:
+4. Start the frontend locally at http://localhost:8000:
 
    ```
    python serve.py
    ```
+
+5. To update the hosted page, commit and push the regenerated `sections.json`.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
 | `byui_scraper.py` | Scrapes sections into SQLite and `sections.json` |
+| `sections.json` | Committed section data the frontend loads |
 | `rmp.py` | Looks up instructor ratings on RateMyProfessors |
 | `rmp_review.py` | Interactive review of suspicious RMP matches |
 | `serve.py` | Local web server for `index.html` |
@@ -50,4 +55,4 @@ pip install requests beautifulsoup4
 
 ## Not committed
 
-`byui.db`, `sections.json`, the page caches and cookie files are git-ignored. Generate them with the steps above. Never commit your login cookies.
+`byui.db`, the page caches and cookie files are git-ignored. Generate them with the steps above. Never commit your login cookies.
