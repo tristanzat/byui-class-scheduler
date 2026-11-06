@@ -1,8 +1,56 @@
 :root {
+  color-scheme: light;
   --border: #d5d9e0;
   --bg: #f5f6f8;
+  --surface: #fff;
+  --surface-alt: #fafbfc;
+  --text: #222;
+  --text-muted: #555;
+  --text-faint: #777;
   --accent: #1f5fae;
+  --header-bg: #1f5fae;
+  --row-hover: #eef3fa;
+  --sec-hover: #fff7df;
+  --sec-selected: #e3f1e3;
+  --sec-border: #e4e6ea;
+  --grid-line: #eceef2;
+  --tag-bg: #e8ebf0;
+  --tag-text: #444;
+  --warn-bg: #fde2e2;
+  --warn-text: #a11;
+  --wait-bg: #fff0cc;
+  --wait-text: #8a5a00;
+  --ok-bg: #dff3e4;
+  --ok-text: #1b6b32;
+  --danger: #b33;
   --hour: 44px;
+}
+
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --border: #3a3f4a;
+  --bg: #14161a;
+  --surface: #1d2025;
+  --surface-alt: #23272e;
+  --text: #e4e6ea;
+  --text-muted: #b0b6c0;
+  --text-faint: #8d94a0;
+  --accent: #6aa7f0;
+  --header-bg: #1b2a40;
+  --row-hover: #262d3a;
+  --sec-hover: #3a3420;
+  --sec-selected: #20382a;
+  --sec-border: #31353d;
+  --grid-line: #2a2e36;
+  --tag-bg: #2e333c;
+  --tag-text: #c5cad2;
+  --warn-bg: #4a2323;
+  --warn-text: #ff9b9b;
+  --wait-bg: #4a3b14;
+  --wait-text: #ffd27a;
+  --ok-bg: #1e3d29;
+  --ok-text: #8fe0a8;
+  --danger: #ff7b7b;
 }
 
 * {
@@ -12,7 +60,7 @@
 body {
   margin: 0;
   font: 14px/1.35 system-ui, sans-serif;
-  color: #222;
+  color: var(--text);
   background: var(--bg);
   height: 100vh;
   height: 100dvh;
@@ -32,7 +80,7 @@ header :focus-visible {
 /* Header */
 
 header {
-  background: var(--accent);
+  background: var(--header-bg);
   color: #fff;
   padding: 8px 16px;
   display: flex;
@@ -50,8 +98,8 @@ header span {
   font-size: 13px;
 }
 
-#togglePanel {
-  margin-left: auto;
+#togglePanel,
+#themeToggle {
   align-self: center;
   padding: 4px 10px;
   border: 1px solid rgba(255, 255, 255, .6);
@@ -60,6 +108,10 @@ header span {
   color: #fff;
   font: inherit;
   cursor: pointer;
+}
+
+#togglePanel {
+  margin-left: auto;
 }
 
 /* Layout */
@@ -80,7 +132,7 @@ main.collapsed aside {
 }
 
 aside {
-  background: #fff;
+  background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -108,6 +160,8 @@ aside {
   border: 1px solid var(--border);
   border-radius: 4px;
   font: inherit;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .filters input[type=checkbox] {
@@ -118,7 +172,7 @@ aside {
 .filters label {
   grid-column: 1 / -1;
   font-size: 12px;
-  color: #555;
+  color: var(--text-muted);
 }
 
 /* Results list */
@@ -131,7 +185,7 @@ aside {
 .count {
   padding: 6px 10px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-faint);
   background: var(--bg);
 }
 
@@ -148,7 +202,7 @@ aside {
 }
 
 .course>summary:hover {
-  background: #eef3fa;
+  background: var(--row-hover);
 }
 
 .course .cn {
@@ -156,7 +210,7 @@ aside {
 }
 
 .course .meta {
-  color: #777;
+  color: var(--text-faint);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -166,16 +220,16 @@ aside {
   align-items: flex-start;
   gap: 8px;
   padding: 6px 10px 6px 22px;
-  border-top: 1px dashed #e4e6ea;
+  border-top: 1px dashed var(--sec-border);
   cursor: pointer;
 }
 
 .sec:hover {
-  background: #fff7df;
+  background: var(--sec-hover);
 }
 
 .sec.selected {
-  background: #e3f1e3;
+  background: var(--sec-selected);
 }
 
 .sec .code {
@@ -187,7 +241,7 @@ aside {
   flex: 1;
   min-width: 0;
   font-size: 12px;
-  color: #444;
+  color: var(--text-muted);
 }
 
 .sec .info div {
@@ -207,24 +261,24 @@ aside {
   font-size: 11px;
   padding: 0 5px;
   border-radius: 8px;
-  background: #e8ebf0;
-  color: #444;
+  background: var(--tag-bg);
+  color: var(--tag-text);
   margin-left: 4px;
 }
 
 .tag.warn {
-  background: #fde2e2;
-  color: #a11;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 
 .tag.wait {
-  background: #fff0cc;
-  color: #8a5a00;
+  background: var(--wait-bg);
+  color: var(--wait-text);
 }
 
 .tag.ok {
-  background: #dff3e4;
-  color: #1b6b32;
+  background: var(--ok-bg);
+  color: var(--ok-text);
 }
 
 .tag a {
@@ -242,7 +296,7 @@ section.cal {
 
 .summary {
   padding: 8px 12px;
-  background: #fff;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
   gap: 8px;
@@ -279,7 +333,7 @@ section.cal {
 #calwrap {
   flex: 1;
   overflow: auto;
-  background: #fff;
+  background: var(--surface);
 }
 
 .grid {
@@ -293,7 +347,7 @@ section.cal {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: #fafbfc;
+  background: var(--surface-alt);
   text-align: center;
   padding: 6px 0;
   font-weight: 600;
@@ -309,14 +363,14 @@ section.cal {
   position: absolute;
   right: 6px;
   font-size: 11px;
-  color: #777;
+  color: var(--text-faint);
   transform: translateY(-50%);
 }
 
 .daycol {
   position: relative;
   border-left: 1px solid var(--border);
-  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hour) - 1px), #eceef2 calc(var(--hour) - 1px), #eceef2 var(--hour));
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hour) - 1px), var(--grid-line) calc(var(--hour) - 1px), var(--grid-line) var(--hour));
 }
 
 .ev {
@@ -348,10 +402,10 @@ section.cal {
 
 .noTime {
   padding: 8px 12px;
-  background: #fff;
+  background: var(--surface);
   border-top: 1px solid var(--border);
   font-size: 12px;
-  color: #444;
+  color: var(--text-muted);
 }
 
 .noTime:empty {
@@ -363,15 +417,15 @@ section.cal {
 button.add {
   padding: 3px 8px;
   border: 1px solid var(--accent);
-  background: #fff;
+  background: var(--surface);
   color: var(--accent);
   border-radius: 4px;
   cursor: pointer;
 }
 
 button.add.rm {
-  border-color: #b33;
-  color: #b33;
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 button.clear {
@@ -381,12 +435,12 @@ button.clear {
 
 .empty {
   padding: 20px;
-  color: #777;
+  color: var(--text-faint);
   text-align: center;
 }
 
 .hint {
-  color: #777;
+  color: var(--text-faint);
 }
 
 /* Mobile */
